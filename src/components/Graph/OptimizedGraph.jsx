@@ -304,36 +304,48 @@ const createConnections = () => {
     }
   }, []);
 
+  const [partialPositions, setPartialPositions] = useState({});
+  const [isComputingLayout, setIsComputingLayout] = useState(false);
+
   // Compute optimal layout for the graph
   useEffect(() => {
     if (!data || Object.keys(data).length === 0) return;
     
     console.log('Computing optimal graph layout...');
-    try {
-      // Compute layout using the parent-centered approach that stacks reasons directly above parents
-      const initialLayout = computeGraphLayout(data);
-      
-      // Detect and resolve any remaining collisions
-      const resolvedLayout = detectAndResolveCollisions(initialLayout, data, 650, 450);
-      
-      // Apply additional spacing to prevent overlaps
-      const spacedLayout = addSpacingBetweenNodes(resolvedLayout, 1.2);
-      
-      // Normalize layout to fit within view
-      const { positions: normalizedLayout } = normalizeLayout(spacedLayout);
-      
-      setNodePositions(normalizedLayout);
-      setLayoutComputed(true);
-      
-      // Find and select question node (but don't display it)
-      const questionNode = Object.entries(data).find(([_, node]) => node.node_type === 'question');
-      if (questionNode && !selectedNode) {
-        handleNodeClick(questionNode[0]);
+    setIsComputingLayout(true);
+    setPartialPositions({});
+    
+    // Use requestAnimationFrame to allow UI updates during computation
+    const computeLayout = () => {
+      try {
+        // Compute initial layout
+        const initialLayout = computeGraphLayout(data);
+        
+        // Show initial positions immediately
+        setPartialPositions(initialLayout);
+        
+        // Continue with collision detection in the background
+        setTimeout(() => {
+          const resolvedLayout = detectAndResolveCollisions(initialLayout, data, 650, 450);
+          setPartialPositions(resolvedLayout);
+          
+          // Final spacing adjustments
+          setTimeout(() => {
+            const spacedLayout = addSpacingBetweenNodes(resolvedLayout, 1.2);
+            const { positions: normalizedLayout } = normalizeLayout(spacedLayout);
+            setNodePositions(normalizedLayout);
+            setLayoutComputed(true);
+            setIsComputingLayout(false);
+          }, 50);
+        }, 50);
+      } catch (err) {
+        console.error('Error computing layout:', err);
+        setIsComputingLayout(false);
       }
-    } catch (err) {
-      console.error('Error computing layout:', err);
-    }
-  }, [data, selectedNode, handleNodeClick]);
+    };
+    
+    requestAnimationFrame(computeLayout);
+  }, [data]);
 
   // Update node references for position tracking
   const handleNodeRef = useCallback((id, element) => {
@@ -522,7 +534,7 @@ const createConnections = () => {
             {connections.length > 0 && <GraphConnections connections={connections} />}
             
             {/* Render nodes based on computed positions */}
-            {layoutComputed && Object.entries(nodePositions).map(([nodeId, position]) => {
+            {(layoutComputed ? nodePositions : partialPositions) && Object.entries(layoutComputed ? nodePositions : partialPositions).map(([nodeId, position]) => {
               // Skip the question node
               if (data[nodeId]?.node_type === 'question') {
                 return null;
@@ -535,9 +547,11 @@ const createConnections = () => {
                   key={nodeId}
                   style={{
                     position: 'absolute',
-                    left: `${position.x}px`,
-                    top: `${position.y}px`,
-                    transform: 'translate(-50%, -50%)', // Center the node
+                    left: '50%',
+                    top: '50%',
+                    transform: `translate(${position.x}px, ${position.y}px) translate(-50%, -50%)`,
+                    willChange: 'transform',
+                    transition: isComputingLayout ? 'none' : 'transform 0.3s ease-out',
                   }}
                 >
                   <EnhancedNode
@@ -553,6 +567,13 @@ const createConnections = () => {
               );
             })}
           </div>
+          
+          {/* Loading indicator */}
+          {isComputingLayout && (
+            <div className="absolute top-4 right-4 bg-white/80 px-3 py-1 rounded-full text-sm text-gray-600 shadow-sm">
+              Computing layout...
+            </div>
+          )}
           
           {/* Toggle panel button */}
           <button
