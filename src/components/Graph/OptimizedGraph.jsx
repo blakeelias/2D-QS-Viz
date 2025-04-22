@@ -54,6 +54,51 @@ const OptimizedGraph = ({ data }) => {
     return findPath(node.parent_id, [targetId, ...path]);
   }, [data]);
 
+  // Add new state for viewport dimensions
+  const [viewportDimensions, setViewportDimensions] = useState({
+    width: 0,
+    height: 0
+  });
+
+  // Update viewport dimensions on resize
+  useEffect(() => {
+    const updateViewportDimensions = () => {
+      if (containerRef.current) {
+        setViewportDimensions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight
+        });
+      }
+    };
+
+    updateViewportDimensions();
+    window.addEventListener('resize', updateViewportDimensions);
+    return () => window.removeEventListener('resize', updateViewportDimensions);
+  }, []);
+
+  // Function to determine if a node is distant
+  const isNodeDistant = useCallback((position) => {
+    if (!position || !viewportDimensions.width || !viewportDimensions.height) return false;
+
+    // Calculate the distance from the center of the viewport
+    const viewportCenter = {
+      x: viewportDimensions.width / 2,
+      y: viewportDimensions.height / 2
+    };
+
+    const nodeScreenPos = {
+      x: position.x * scale + containerOffset.x,
+      y: position.y * scale + containerOffset.y
+    };
+
+    const distance = Math.sqrt(
+      Math.pow(nodeScreenPos.x - viewportCenter.x, 2) +
+      Math.pow(nodeScreenPos.y - viewportCenter.y, 2)
+    );
+
+    // Consider a node distant if it's more than 1.5 viewport widths away
+    return distance > viewportDimensions.width * 1.5;
+  }, [scale, containerOffset, viewportDimensions]);
 
 // Helper function to create a curved path for identity connections - DEFINED FIRST
 const calculateIdenticalPath = (start, end) => {
@@ -483,6 +528,8 @@ const createConnections = () => {
                 return null;
               }
               
+              const isDistant = isNodeDistant(position);
+              
               return (
                 <div
                   key={nodeId}
@@ -500,6 +547,7 @@ const createConnections = () => {
                     activePath={activePath}
                     onNodeRef={handleNodeRef}
                     onCircleRef={(element) => saveCircleRef(nodeId, element)}
+                    isDistant={isDistant}
                   />
                 </div>
               );

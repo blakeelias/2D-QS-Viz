@@ -19,6 +19,7 @@ const EnhancedNode = ({
   activePath = [],
   onNodeRef = null,
   onCircleRef = null,
+  isDistant = false // New prop to indicate if node is far from viewport
 }) => {
   const nodeRef = useRef(null);
   const circleRef = useRef(null);
@@ -92,8 +93,8 @@ const EnhancedNode = ({
   const nodeColors = getNodeTypeColor(node.node_type);
 
   // Fixed width and height for all nodes
-  const nodeWidth = 'w-96';
-  const nodeHeight = 'h-48';
+  const nodeWidth = isDistant ? 'w-48' : 'w-96'; // Smaller width for distant nodes
+  const nodeHeight = isDistant ? 'h-24' : 'h-48'; // Smaller height for distant nodes
   
   // Highlight borders based on node type or identity
   let borderStyles = isInPath ? 'ring-2 ring-blue-600' : '';
@@ -103,12 +104,10 @@ const EnhancedNode = ({
   
   // Terminal status indicator text
   const getTerminalStatus = () => {
-    if (isNonsense) return 'Terminal: Nonsense';
+    if (isNonsense) return 'Nonsense';
     if (identicalTo) {
-      // Get the identical node's summary if available
       const identicalNode = data[identicalTo];
       if (identicalNode && identicalNode.summary) {
-        // Limit the summary length to avoid overflow
         const truncatedSummary = identicalNode.summary.length > 25 
           ? identicalNode.summary.substring(0, 22) + '...' 
           : identicalNode.summary;
@@ -119,6 +118,80 @@ const EnhancedNode = ({
     return null;
   };
 
+  // Simplified rendering for distant nodes
+  if (isDistant) {
+    return (
+      <div 
+        ref={nodeRef} 
+        data-node-id={id}
+        className={`
+          ${isInPath ? 'z-10' : 'z-0'}
+        `}
+      >
+        {/* Simplified card for distant nodes */}
+        <div 
+          className={`
+            ${nodeWidth} ${nodeHeight} rounded-lg overflow-hidden shadow-lg cursor-pointer
+            transition-all duration-300 transform
+            ${borderStyles}
+            ${isInPath ? 'scale-105 shadow-xl' : 'hover:shadow-xl hover:scale-105'}
+            ${isNonsense ? 'opacity-70' : 'opacity-100'}
+            ${identicalTo ? 'bg-blue-50' : 'bg-white'}
+            ${nodeColors.border}
+            border-2
+          `}
+          onClick={() => onNodeClick(id)}
+        >
+          <div className="flex h-full bg-white">
+            {/* Simplified image column */}
+            <div 
+              ref={circleRef} 
+              className="w-24 h-full bg-gray-100 node-circle"
+            >
+              <img 
+                src={thumbnailImage} 
+                alt={node.summary || 'Node'} 
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EImage%3C/text%3E%3C/svg%3E`;
+                }}
+              />
+            </div>
+            
+            {/* Simplified content column */}
+            <div className="flex-1 p-2 overflow-hidden flex flex-col justify-between">
+              <h3 className="text-xs font-bold text-gray-800 font-serif break-words">
+                {node.summary || 'Untitled Node'}
+              </h3>
+              
+              {/* Simplified terminal status */}
+              {isTerminal && (
+                <div className={`
+                  mt-1 text-[10px] px-1 py-0.5 inline-block rounded-full 
+                  ${isNonsense ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}
+                `}>
+                  {getTerminalStatus()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Simplified node type indicator */}
+        <div className={`
+          absolute -top-2 -right-2 px-1 py-0.5 
+          rounded-full border shadow-sm font-bold text-[10px]
+          ${nodeColors.bg} ${nodeColors.border} 
+          ${nodeColors.text}
+        `}>
+          {node.node_type || 'node'}
+        </div>
+      </div>
+    );
+  }
+
+  // Original full rendering for nearby nodes
   return (
     <div 
       ref={nodeRef} 
@@ -201,4 +274,4 @@ const EnhancedNode = ({
   );
 };
 
-export default EnhancedNode;
+export default React.memo(EnhancedNode);
