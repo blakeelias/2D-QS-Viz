@@ -488,9 +488,10 @@ const createConnections = () => {
                   key={nodeId}
                   style={{
                     position: 'absolute',
-                    left: `${position.x}px`,
-                    top: `${position.y}px`,
-                    transform: 'translate(-50%, -50%)', // Center the node
+                    left: '50%',
+                    top: '50%',
+                    transform: `translate(${position.x}px, ${position.y}px) translate(-50%, -50%)`,
+                    willChange: 'transform',
                   }}
                 >
                   <EnhancedNode
