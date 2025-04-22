@@ -313,38 +313,30 @@ const createConnections = () => {
     
     console.log('Computing optimal graph layout...');
     setIsComputingLayout(true);
-    setPartialPositions({});
     
-    // Use requestAnimationFrame to allow UI updates during computation
-    const computeLayout = () => {
-      try {
-        // Compute initial layout
-        const initialLayout = computeGraphLayout(data);
+    try {
+      // Compute initial layout
+      const initialLayout = computeGraphLayout(data);
+      setNodePositions(initialLayout);
+      setLayoutComputed(true);
+      
+      // Continue with collision detection in the background
+      setTimeout(() => {
+        const resolvedLayout = detectAndResolveCollisions(initialLayout, data, 650, 450);
+        setNodePositions(resolvedLayout);
         
-        // Show initial positions immediately
-        setPartialPositions(initialLayout);
-        
-        // Continue with collision detection in the background
+        // Final spacing adjustments
         setTimeout(() => {
-          const resolvedLayout = detectAndResolveCollisions(initialLayout, data, 650, 450);
-          setPartialPositions(resolvedLayout);
-          
-          // Final spacing adjustments
-          setTimeout(() => {
-            const spacedLayout = addSpacingBetweenNodes(resolvedLayout, 1.2);
-            const { positions: normalizedLayout } = normalizeLayout(spacedLayout);
-            setNodePositions(normalizedLayout);
-            setLayoutComputed(true);
-            setIsComputingLayout(false);
-          }, 50);
+          const spacedLayout = addSpacingBetweenNodes(resolvedLayout, 1.2);
+          const { positions: normalizedLayout } = normalizeLayout(spacedLayout);
+          setNodePositions(normalizedLayout);
+          setIsComputingLayout(false);
         }, 50);
-      } catch (err) {
-        console.error('Error computing layout:', err);
-        setIsComputingLayout(false);
-      }
-    };
-    
-    requestAnimationFrame(computeLayout);
+      }, 50);
+    } catch (err) {
+      console.error('Error computing layout:', err);
+      setIsComputingLayout(false);
+    }
   }, [data]);
 
   // Update node references for position tracking
@@ -534,7 +526,7 @@ const createConnections = () => {
             {connections.length > 0 && <GraphConnections connections={connections} />}
             
             {/* Render nodes based on computed positions */}
-            {(layoutComputed ? nodePositions : partialPositions) && Object.entries(layoutComputed ? nodePositions : partialPositions).map(([nodeId, position]) => {
+            {layoutComputed && Object.entries(nodePositions).map(([nodeId, position]) => {
               // Skip the question node
               if (data[nodeId]?.node_type === 'question') {
                 return null;
