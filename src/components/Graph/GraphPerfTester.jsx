@@ -128,7 +128,7 @@ function GraphPerfTester({ graphElementId }) {
   };
 
   return (
-    <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid gray', borderRadius: '8px' }}>
+    <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid gray', borderRadius: '8px', textAlign: 'right' }}>
       <h3>Graph Performance Tester</h3>
       <button onClick={runTest} disabled={testRunning}>
         {testRunning ? 'Running Test...' : 'Run Test'}
