@@ -1,6 +1,7 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import OptimizedGraph from './components/Graph/OptimizedGraph';
+import GraphPerfTester from './components/Graph/GraphPerfTester';
 import './styles/App.css';
 
 function App() {
@@ -141,7 +142,7 @@ function App() {
           <OptimizedGraph data={graphData} />
         )
       )}
-      <GraphPerfTester graphElementId="absolute" />
+      <GraphPerfTester graphElementId="graph-container" />
     </div>
   );
 }
