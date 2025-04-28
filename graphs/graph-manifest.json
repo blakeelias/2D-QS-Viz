@@ -23,6 +23,12 @@
         "name": "What is Knowledge? Broad-Shallow 1hr",
         "description": "Max repsonses = 100",
         "filename": "graph_broad_60mins_v1.json"
-      }
+      },
+      {
+        "id": "broad_60mins_v1",
+        "name": "What Are Reasons? Depth 4",
+        "description": "Max repsonses = 100",
+        "filename": "graph_what_are_reasons_depth4_timeNone_20250408_0939490.json"
+      },
     ]
   }
