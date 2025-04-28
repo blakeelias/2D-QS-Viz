@@ -141,6 +141,7 @@ function App() {
           <OptimizedGraph data={graphData} />
         )
       )}
+      <GraphPerfTester graphElementId="absolute" />
     </div>
   );
 }

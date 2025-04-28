@@ -453,7 +453,7 @@ const createConnections = () => {
   }, [handleMouseMove]);
 
   return (
-    <div className="h-screen w-full flex bg-white">
+    <div className="h-screen w-full flex bg-white" id="graph-container">
       <div className="relative flex-1 overflow-hidden">
         {/* Main graph area */}
         <div 
